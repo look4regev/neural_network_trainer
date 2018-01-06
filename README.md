@@ -6,4 +6,5 @@ This will done by enabling:
 1. different number of layers and different neurons in each layer
 2. different cost functions
 3. different regularization techniques
+
 Code your own project in order to be able to do required changes, as you desire. It is prohibited to  use a third party code which will limit your hands for developing additional tasks in this project and in later projects.
