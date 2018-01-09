@@ -1,4 +1,4 @@
-# Multi-Layered Neural Network trained by back propagation
+# Multi-Layered Neural Network trained by back propagation [![Build Status](https://travis-ci.org/look4regev/neural_network_trainer?branch=master)](https://travis-ci.org/look4regev/neural_network_trainer)
 In this project, you are asked to design and develop in python a simple neural network which will be trained using the regular Backpropagation algorithm.
 To test your network it is recommended use the [MNIST](http://yann.lecun.com/exdb/mnist/index.html) data set for training, validation and testing. In a more advanced steps you may use the [CIFAR 10](https://www.cs.toronto.edu/~kriz/cifar.html) dataset.
 The neural network will be developed in a flexible manner to enable future use in the next project.
