@@ -1,6 +1,6 @@
 import numpy as np
 
-from nn_tools.nueron_tools import sigmoid, sigmoid_derivative
+from nn_tools.neuron_tools import sigmoid, sigmoid_derivative
 
 
 class NetworkValues(object):
@@ -40,10 +40,11 @@ class NeuralNetwork(object):
     def __init__(self, neuron_count):
         self.network_values = NetworkValues(neuron_count)
         # create randomized weights
-        self.rand_weight_inputs = np.random.randn(neuron_count, neuron_count)
+        self.rand_weight_inputs = np.random.randn(self.network_values.input_neuron_count,
+                                                  neuron_count)
         self.rand_weight_outputs = np.random.randn(neuron_count, neuron_count)
         # create arrays of 0 for changes
-        self.change_inputs = np.zeros((neuron_count, neuron_count))
+        self.change_inputs = np.zeros((self.network_values.input_neuron_count, neuron_count))
         self.change_outputs = np.zeros((neuron_count, neuron_count))
 
     def feed_forward(self, inputs):
@@ -95,11 +96,13 @@ class NeuralNetwork(object):
     def train(self, patterns, iterations=3000, learning_rate=0.0002):
         for i in range(iterations):
             error = 0.0
-            for pattern in patterns:
+            for j, pattern in enumerate(patterns):
                 inputs = pattern[0]
                 targets = pattern[1]
                 self.feed_forward(inputs)
                 error = self.back_propagate(targets, learning_rate)
+                if j % 50 == 0:
+                    print 'error %-.5f' % error
             if i % 500 == 0:
                 print 'error %-.5f' % error
 
