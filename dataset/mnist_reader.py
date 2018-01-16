@@ -9,7 +9,7 @@ import numpy as np
 from matplotlib import pyplot
 
 
-def read(dataset="training", path=".", with_labels=False):
+def read(dataset="training", path=".", with_labels=True):
     """
     Python function for importing the MNIST data set.  It returns an iterator
     of 2-tuples with the first element being the label and the second element
@@ -32,7 +32,7 @@ def read(dataset="training", path=".", with_labels=False):
 
     with open(fname_img, 'rb') as fimg:
         _, _, rows, cols = struct.unpack(">IIII", fimg.read(16))
-        img = np.fromfile(fimg, dtype=np.uint8).reshape(len(lbl), rows, cols)
+        img = np.fromfile(fimg, dtype=np.uint8).reshape(len(lbl), rows*cols)
 
     def get_img(idx):
         if with_labels:
