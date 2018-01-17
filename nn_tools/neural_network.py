@@ -10,10 +10,9 @@ ITERATIONS = 3000
 class NeuralNetwork(object):
     def __init__(self, layers_count):
         bias_increment = 1
-        self.input_count = layers_count['input']
+        self.input_count = layers_count['input'] + bias_increment
         self.output_count = layers_count['output']
         self.layers_count = layers_count
-        self.input_count += bias_increment
 
         self.layers = {'input': np.ones(self.input_count),
                        'output': np.ones(self.output_count),
