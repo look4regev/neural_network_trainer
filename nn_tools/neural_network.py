@@ -10,25 +10,27 @@ ITERATIONS = 3000
 class NeuralNetwork(object):
     def __init__(self, layers_count):
         bias_increment = 1
+        self.input_count = layers_count['input']
+        self.output_count = layers_count['output']
         self.layers_count = layers_count
-        self.layers_count['input'] += bias_increment
+        self.input_count += bias_increment
 
-        self.layers = {'input': np.ones(self.layers_count['input']),
-                       'output': np.ones(self.layers_count['output']),
+        self.layers = {'input': np.ones(self.input_count),
+                       'output': np.ones(self.output_count),
                        'hidden': np.ones(self.layers_count['hidden'])}
 
-        self.weights_input = np.random.randn(self.layers_count['input'], self.layers_count['hidden'])
-        self.weights_output = np.random.randn(self.layers_count['hidden'], self.layers_count['output'])
+        self.weights_input = np.random.randn(self.input_count, self.layers_count['hidden'])
+        self.weights_output = np.random.randn(self.layers_count['hidden'], self.output_count)
         # create arrays of 0 for changes
-        self.change_inputs = np.zeros((self.layers_count['input'], self.layers_count['hidden']))
-        self.change_outputs = np.zeros((self.layers_count['hidden'], self.layers_count['output']))
+        self.change_inputs = np.zeros((self.input_count, self.layers_count['hidden']))
+        self.change_outputs = np.zeros((self.layers_count['hidden'], self.output_count))
 
     def raise_on_wrong_inputs_count(self, inputs_count):
-        if inputs_count != self.layers_count['input'] - 1:
+        if inputs_count != self.input_count - 1:
             raise ValueError('Wrong number of inputs!')
 
     def input_activation(self, input_values):
-        for i in range(self.layers_count['input'] - 1):  # -1 is to avoid the bias
+        for i in range(self.input_count - 1):  # -1 is to avoid the bias
             self.layers['input'][i] = input_values[i]
 
     def layer_activation(self, vector, matrix):
@@ -47,12 +49,12 @@ class NeuralNetwork(object):
         :param targets: y values
         :return: updated weights and current error
         """
-        if targets.size != self.layers_count['output']:
+        if targets.size != self.output_count:
             raise ValueError('Wrong number of targets you silly goose!')
         # calculate error terms for output
         # the delta tell you which direction to change the weights
-        output_deltas = np.zeros(self.layers_count['output'])
-        for k in range(self.layers_count['output']):
+        output_deltas = np.zeros(self.output_count)
+        for k in range(self.output_count):
             error = -(targets[k] - self.layers['output'][k])
             output_deltas[k] = sigmoid_derivative(self.layers['output'][k]) * error
         # calculate error terms for hidden
@@ -60,7 +62,7 @@ class NeuralNetwork(object):
         hidden_deltas = np.zeros(self.layers_count['hidden'])
         for j in range(self.layers_count['hidden']):
             error = 0.0
-            for k in range(self.layers_count['output']):
+            for k in range(self.output_count):
                 error += output_deltas[k] * self.weights_output[j][k]
             hidden_deltas[j] = sigmoid_derivative(self.layers['hidden'][j]) * error
         # update the weights connecting hidden to output
@@ -70,7 +72,7 @@ class NeuralNetwork(object):
                 self.weights_output[j][k] -= learning_rate * change + self.change_outputs[j][k]
                 self.change_outputs[j][k] = change
         # update the weights connecting input to hidden
-        for i in range(self.layers_count['input']):
+        for i in range(self.input_count):
             for j in range(self.layers_count['hidden']):
                 change = hidden_deltas[j] * self.layers['input'][i]
                 self.weights_input[i][j] -= learning_rate * change + self.change_inputs[i][j]
