@@ -66,7 +66,7 @@ class NeuralNetwork(object):
             hidden_deltas[j] = sigmoid_derivative(self.layers['hidden'][j]) * error
         # update the weights connecting hidden to output
         for j in range(self.layers_count['hidden']):
-            for k in range(self.layers_count['hidden']):
+            for k in range(self.output_count):
                 change = output_deltas[k] * self.layers['hidden'][j]
                 self.weights_output[j][k] -= learning_rate * change + self.change_outputs[j][k]
                 self.change_outputs[j][k] = change
