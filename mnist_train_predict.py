@@ -37,8 +37,8 @@ def train_and_predict_mnist():
     print "Test set size =", test_size
     print "V) Matches =", matches
     print "X) Mistakes =", test_size - matches
-    print "Total Precision = %.3f" % precision
-    print "Total Recall = %.3f" % recall
+    print "Total Precision = %.4f" % precision
+    print "Total Recall = %.4f" % recall
     print 'Predictions histogram:', predictions_histogram
 
 

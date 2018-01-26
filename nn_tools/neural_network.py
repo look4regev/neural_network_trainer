@@ -109,13 +109,13 @@ class NeuralNetwork(object):
     def train(self, labels, data, iterations, learning_rate=0.0002):
         error = 0.0
         for iteration in range(iterations):
-            print 'Iteration', iteration, 'with error value of %.4f' % error
             for data_index, label in enumerate(labels):
                 self.feed_forward(data[data_index])
                 error = self.back_propagate(label, learning_rate)
                 if data_index % 500 == 0:
-                    print 'Output error after', iteration, 'iterations and',\
-                        data_index, 'items is %.4f' % error
+                    print 'Output error in iteration', iteration+1, 'and',\
+                        data_index, 'trained items is %.5f' % error
+            print 'Iteration', iteration+1, 'ended with error value of %.5f' % error
 
     def predict(self, input_vector):
         prediction_output_vector = self.feed_forward(input_vector)
