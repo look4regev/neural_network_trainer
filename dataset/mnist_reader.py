@@ -8,45 +8,55 @@ import struct
 import numpy as np
 from matplotlib import pyplot
 
+MAX_PIXEL_VALUE = 255.0
 
-def read(dataset="training", path=".", with_labels=True):
-    """
-    Python function for importing the MNIST data set.  It returns an iterator
-    of 2-tuples with the first element being the label and the second element
-    being a numpy.uint8 2D array of pixel data for the given image.
-    """
 
-    if dataset == "training":
-        fname_img = os.path.join(path, 'train-images-idx3-ubyte.bin')
-        fname_lbl = os.path.join(path, 'train-labels-idx1-ubyte.bin')
-    elif dataset == "testing":
-        fname_img = os.path.join(path, 't10k-images-idx3-ubyte.bin')
-        fname_lbl = os.path.join(path, 't10k-labels-idx1-ubyte.bin')
+class DataSets(object):
+    TRAINING = 'training'
+    TESTING = 'testing'
+
+
+def label_to_vector(label):
+    vector = np.zeros(10)
+    vector[label] = 1
+    return vector
+
+
+def _normalize_images(images):
+    return [image/MAX_PIXEL_VALUE for image in images]
+
+
+def read_mnist(dataset, path=".", read_max=100000):
+    """Returns a dict of {labels, labels_vectors, images}"""
+
+    if dataset == DataSets.TRAINING:
+        images_file = os.path.join(path, 'train-images-idx3-ubyte.bin')
+        labels_file = os.path.join(path, 'train-labels-idx1-ubyte.bin')
+    elif dataset == DataSets.TESTING:
+        images_file = os.path.join(path, 't10k-images-idx3-ubyte.bin')
+        labels_file = os.path.join(path, 't10k-labels-idx1-ubyte.bin')
     else:
         raise ValueError("Dataset must be 'testing' or 'training'")
 
-    # Load everything in some numpy arrays
-    with open(fname_lbl, 'rb') as flbl:
-        struct.unpack(">II", flbl.read(8))
-        lbl = np.fromfile(flbl, dtype=np.int8)
+    with open(labels_file, 'rb') as label_file:
+        struct.unpack(">II", label_file.read(8))
+        labels = np.fromfile(label_file, dtype=np.int8)
 
-    with open(fname_img, 'rb') as fimg:
-        _, _, rows, cols = struct.unpack(">IIII", fimg.read(16))
-        img = np.fromfile(fimg, dtype=np.uint8).reshape(len(lbl), rows*cols)
+    with open(images_file, 'rb') as image_file:
+        _, _, rows, cols = struct.unpack(">IIII", image_file.read(16))
+        images = np.fromfile(image_file, dtype=np.uint8).reshape(len(labels), rows*cols)
+    images = _normalize_images(images)
 
-    def get_img(idx):
-        if with_labels:
-            return lbl[idx], img[idx]
-        return img[idx]
-
-    for i in xrange(len(lbl)):
-        yield get_img(i)
+    data = {
+        'labels': labels[:read_max],
+        'labels_vectors': [label_to_vector(label) for label in labels[:read_max]],
+        'images': images[:read_max]
+    }
+    return data
 
 
 def show(image):
-    """
-    Render a given numpy.uint8 2D array of pixel data.
-    """
+    """Render a given numpy.uint8 2D array of pixel data."""
     fig = pyplot.figure()
     axis = fig.add_subplot(1, 1, 1)
     imgplot = axis.imshow(image)

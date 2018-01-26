@@ -4,105 +4,120 @@ import numpy as np
 from nn_tools.neuron_tools import sigmoid, sigmoid_derivative
 
 
-ITERATIONS = 3000
-
-
 class NeuralNetwork(object):
-    def __init__(self, layers_count):
+    def __init__(self, input_layer_size, active_layers_sizes):
         bias_increment = 1
-        self.input_count = layers_count['input'] + bias_increment
-        self.output_count = layers_count['output']
-        self.layers_count = layers_count
+        self.input = np.ones(input_layer_size + bias_increment)
+        self.active = [np.ones(layer_size) for layer_size in active_layers_sizes]
+        self.weights = []
+        self._init_weights(active_layers_sizes)
 
-        self.layers = {'input': np.ones(self.input_count),
-                       'output': np.ones(self.output_count),
-                       'hidden': np.ones(self.layers_count['hidden'])}
+        self.changes = []
+        self._init_changes(active_layers_sizes)
 
-        self.weights_input = np.random.randn(self.input_count, self.layers_count['hidden'])
-        self.weights_output = np.random.randn(self.layers_count['hidden'], self.output_count)
-        # create arrays of 0 for changes
-        self.change_inputs = np.zeros((self.input_count, self.layers_count['hidden']))
-        self.change_outputs = np.zeros((self.layers_count['hidden'], self.output_count))
+    def get_output(self):
+        return self.active[len(self.active)-1]
 
-    def raise_on_wrong_inputs_count(self, inputs_count):
-        if inputs_count != self.input_count - 1:
-            raise ValueError('Wrong number of inputs!')
+    def _init_weights(self, active_layers_sizes):
+        weights_layer_rows_size = len(self.input)
+        for layer_size in active_layers_sizes:
+            self.weights.append(np.random.randn(weights_layer_rows_size, layer_size))
+            weights_layer_rows_size = layer_size
 
-    def input_activation(self, input_values):
-        for i in range(self.input_count - 1):  # -1 is to avoid the bias
-            self.layers['input'][i] = input_values[i]
+    def _init_changes(self, active_layers_sizes):
+        changes_layer_rows_size = len(self.input)
+        for layer_size in active_layers_sizes:
+            self.changes.append(np.zeros((changes_layer_rows_size, layer_size)))
+            changes_layer_rows_size = layer_size
+
+    def raise_on_wrong_inputs_count(self, input_layer_count):
+        expected_size_without_bias = len(self.input) - 1
+        if expected_size_without_bias != input_layer_count:
+            raise ValueError('Wrong input size! Expected: %s, got %s' % (expected_size_without_bias,
+                                                                         input_layer_count))
+
+    def input_activation(self, input_layer):
+        for i, element in enumerate(input_layer):
+            self.input[i] = element
 
     def layer_activation(self, vector, matrix):
         result_vector = vector.dot(matrix)
-        return np.array([sigmoid(neuron_result) for neuron_result in result_vector])
+        activated_vector = np.array([sigmoid(neuron_result) for neuron_result in result_vector])
+        return activated_vector
 
     def feed_forward(self, input_layer):
         self.raise_on_wrong_inputs_count(input_layer.size)
         self.input_activation(input_layer)
-        self.layers['hidden'] = self.layer_activation(self.layers['input'], self.weights_input)
-        self.layers['output'] = self.layer_activation(self.layers['hidden'], self.weights_output)
-        return self.layers['output'][:]
+        self.active[0] = self.layer_activation(self.input, self.weights[0])
+        for i in range(len(self.active)-1):
+            self.active[i+1] = self.layer_activation(self.active[i], self.weights[i+1])
+        return self.get_output()
 
-    def back_propagate(self, targets, learning_rate):
-        """
-        :param targets: y values
-        :return: updated weights and current error
-        """
-        if targets.size != self.output_count:
-            raise ValueError('Wrong number of targets you silly goose!')
-        # calculate error terms for output
-        # the delta tell you which direction to change the weights
-        output_deltas = np.zeros(self.output_count)
-        for k in range(self.output_count):
-            error = -(targets[k] - self.layers['output'][k])
-            output_deltas[k] = sigmoid_derivative(self.layers['output'][k]) * error
-        # calculate error terms for hidden
-        # delta tells you which direction to change the weights
-        hidden_deltas = np.zeros(self.layers_count['hidden'])
-        for j in range(self.layers_count['hidden']):
-            error = 0.0
-            for k in range(self.output_count):
-                error += output_deltas[k] * self.weights_output[j][k]
-            hidden_deltas[j] = sigmoid_derivative(self.layers['hidden'][j]) * error
-        # update the weights connecting hidden to output
-        for j in range(self.layers_count['hidden']):
-            for k in range(self.output_count):
-                change = output_deltas[k] * self.layers['hidden'][j]
-                self.weights_output[j][k] -= learning_rate * change + self.change_outputs[j][k]
-                self.change_outputs[j][k] = change
-        # update the weights connecting input to hidden
-        for i in range(self.input_count):
-            for j in range(self.layers_count['hidden']):
-                change = hidden_deltas[j] * self.layers['input'][i]
-                self.weights_input[i][j] -= learning_rate * change + self.change_inputs[i][j]
-                self.change_inputs[i][j] = change
-        # calculate error
+    def get_error(self, target_vector):
         error = 0.0
-        for i, target in enumerate(targets):
-            error += 0.5 * (target - self.layers['output'][i]) ** 2
+        for i, target in enumerate(target_vector):
+            error += 0.5 * (target - self.get_output()[i]) ** 2
         return error
 
-    def label_to_output_array(self, label):
-        result = np.zeros(10)
-        result[label] = 1
-        return result
+    def update_weights(self, layer1, layer2, delta, weights, changes, learning_rate):
+        for j, layer1_elem in enumerate(layer1):
+            for k in range(len(layer2)):
+                change = delta[k] * layer1_elem
+                weights[j][k] -= learning_rate * change + changes[j][k]
+                changes[j][k] = change
 
-    def train(self, patterns, iterations=ITERATIONS, learning_rate=0.0002):
-        for i in range(iterations):
-            error = 0.0
-            for j, (label, input_layer) in enumerate(patterns):
-                self.feed_forward(input_layer)
-                error = self.back_propagate(self.label_to_output_array(label), learning_rate)
-                if j % 50 == 0:
-                    print 'error %-.5f' % error
-            if i % 500 == 0:
-                print 'error %-.5f' % error
+    def get_output_delta(self, target_vector):
+        output_deltas = np.zeros(len(self.get_output()))
+        for k in range(len(self.get_output())):
+            error = -(target_vector[k] - self.get_output()[k])
+            output_deltas[k] = sigmoid_derivative(self.get_output()[k]) * error
+        return output_deltas
 
-    def predict(self, items):
+    def calc_layers_delta(self, layer1, layer2, weights):
+        deltas = np.zeros(len(layer1))
+        for j, layer1_elem in enumerate(layer1):
+            error = layer2.dot(weights[j])
+            deltas[j] = sigmoid_derivative(layer1_elem) * error
+        return deltas
+
+    def back_propagate(self, target_vector, learning_rate):
         """
-        :return: list of predictions after training algorithm
+        :param target_vector: y values
+        :return: updates network weights and current error
         """
-        predictions = []
-        for input_layer in items:
-            predictions.append(self.feed_forward(input_layer))
-        return predictions
+        if target_vector.size != len(self.get_output()):
+            raise ValueError('Wrong number of targets!')
+        # the delta tells you which direction to change the weights
+        output_deltas = self.get_output_delta(target_vector)
+
+        last_layer = self.get_output()
+        last_deltas = output_deltas
+        for i, hidden in enumerate(reversed(self.active[:-1])):
+            weights = self.weights[len(self.weights) - i - 1]
+            changes = self.changes[len(self.changes) - i - 1]
+            self.update_weights(hidden, last_layer, last_deltas, weights, changes, learning_rate)
+
+            last_deltas = self.calc_layers_delta(hidden, last_deltas, weights)
+            last_layer = hidden
+
+        self.update_weights(self.input, self.active[0], last_deltas,
+                            self.weights[0], self.changes[0], learning_rate)
+
+        error = self.get_error(target_vector)
+        return error
+
+    def train(self, labels, data, iterations, learning_rate=0.0002):
+        error = 0.0
+        for iteration in range(iterations):
+            for data_index, label in enumerate(labels):
+                self.feed_forward(data[data_index])
+                error = self.back_propagate(label, learning_rate)
+                if data_index % 500 == 0:
+                    print 'Output error in iteration', iteration+1, 'and',\
+                        data_index, 'trained items is %.5f' % error
+            print 'Iteration', iteration+1, 'ended with error value of %.5f' % error
+
+    def predict(self, input_vector):
+        prediction_output_vector = self.feed_forward(input_vector)
+        winning_class = np.argmax(prediction_output_vector)
+        return winning_class
