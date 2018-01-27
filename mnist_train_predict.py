@@ -8,13 +8,13 @@ MNIST_IMG_SIZE = 28
 MNIST_CLASSES_AS_OUTPUT_LAYER_SIZE = 10
 INPUT_LAYER_NEURONS_COUNT = MNIST_IMG_SIZE * MNIST_IMG_SIZE
 # Active means hidden layers + output layer
-ACTIVE_LAYERS_NEURONS_COUNT = [20, 15, MNIST_CLASSES_AS_OUTPUT_LAYER_SIZE]
-ITERATIONS = 5
+ACTIVE_LAYERS_NEURONS_COUNT = [30, 15, MNIST_CLASSES_AS_OUTPUT_LAYER_SIZE]
+ITERATIONS = 10
 MNIST_SUBSET_SIZE = 60000
 
 
 def train_and_predict_mnist():
-    neural_network = NeuralNetwork(INPUT_LAYER_NEURONS_COUNT, ACTIVE_LAYERS_NEURONS_COUNT)
+    neural_network = NeuralNetwork(INPUT_LAYER_NEURONS_COUNT, ACTIVE_LAYERS_NEURONS_COUNT, 0.1)
 
     mnist_image_data = read_mnist(DataSets.TRAINING, 'dataset/', MNIST_SUBSET_SIZE)
     neural_network.train(mnist_image_data['labels_vectors'], mnist_image_data['images'], ITERATIONS)
