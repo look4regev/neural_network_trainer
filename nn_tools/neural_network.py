@@ -1,11 +1,12 @@
 # pylint: disable=no-self-use
 import numpy as np
+from cost_functions import ErrorCalculator
 
 from nn_tools.neuron_tools import sigmoid, sigmoid_derivative
 
 
 class NeuralNetwork(object):
-    def __init__(self, input_layer_size, active_layers_sizes):
+    def __init__(self, input_layer_size, active_layers_sizes, l2_regularization=0):
         bias_increment = 1
         self.input = np.ones(input_layer_size + bias_increment)
         self.active = [np.ones(layer_size) for layer_size in active_layers_sizes]
@@ -14,6 +15,7 @@ class NeuralNetwork(object):
 
         self.changes = []
         self._init_changes(active_layers_sizes)
+        self.l2 = l2_regularization
 
     def get_output(self):
         return self.active[len(self.active)-1]
@@ -53,17 +55,12 @@ class NeuralNetwork(object):
             self.active[i+1] = self.layer_activation(self.active[i], self.weights[i+1])
         return self.get_output()
 
-    def get_error(self, target_vector):
-        error = 0.0
-        for i, target in enumerate(target_vector):
-            error += 0.5 * (target - self.get_output()[i]) ** 2
-        return error
-
     def update_weights(self, layer1, layer2, delta, weights, changes, learning_rate):
         for j, layer1_elem in enumerate(layer1):
             for k in range(len(layer2)):
                 change = delta[k] * layer1_elem
-                weights[j][k] -= learning_rate * change + changes[j][k]
+                regularization = self.l2 * weights[j][k]
+                weights[j][k] -= learning_rate * (change + regularization) + changes[j][k]
                 changes[j][k] = change
 
     def get_output_delta(self, target_vector):
@@ -103,8 +100,7 @@ class NeuralNetwork(object):
         self.update_weights(self.input, self.active[0], last_deltas,
                             self.weights[0], self.changes[0], learning_rate)
 
-        error = self.get_error(target_vector)
-        return error
+        return ErrorCalculator.get_error(target_vector, self.get_output())
 
     def train(self, labels, data, iterations, learning_rate=0.0002):
         error = 0.0
@@ -112,7 +108,7 @@ class NeuralNetwork(object):
             for data_index, label in enumerate(labels):
                 self.feed_forward(data[data_index])
                 error = self.back_propagate(label, learning_rate)
-                if data_index % 500 == 0:
+                if data_index % 50 == 0:
                     print 'Output error in iteration', iteration+1, 'and',\
                         data_index, 'trained items is %.5f' % error
             print 'Iteration', iteration+1, 'ended with error value of %.5f' % error
