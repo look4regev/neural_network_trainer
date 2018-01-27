@@ -1,7 +1,7 @@
 # pylint: disable=no-self-use
 import numpy as np
-from cost_functions import ErrorCalculator
 
+import nn_tools.cost_functions as cost_functions
 from nn_tools.neuron_tools import sigmoid, sigmoid_derivative
 
 
@@ -15,7 +15,7 @@ class NeuralNetwork(object):
 
         self.changes = []
         self._init_changes(active_layers_sizes)
-        self.l2 = l2_regularization
+        self.l2_regularization = l2_regularization
 
     def get_output(self):
         return self.active[len(self.active)-1]
@@ -59,7 +59,7 @@ class NeuralNetwork(object):
         for j, layer1_elem in enumerate(layer1):
             for k in range(len(layer2)):
                 change = delta[k] * layer1_elem
-                regularization = self.l2 * weights[j][k]
+                regularization = self.l2_regularization * weights[j][k]
                 weights[j][k] -= learning_rate * (change + regularization) + changes[j][k]
                 changes[j][k] = change
 
@@ -100,7 +100,8 @@ class NeuralNetwork(object):
         self.update_weights(self.input, self.active[0], last_deltas,
                             self.weights[0], self.changes[0], learning_rate)
 
-        return ErrorCalculator.get_error(target_vector, self.get_output())
+        output_error = cost_functions.quadratic(target_vector, self.get_output())
+        return output_error
 
     def train(self, labels, data, iterations, learning_rate=0.0002):
         error = 0.0
