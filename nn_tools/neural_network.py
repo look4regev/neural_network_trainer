@@ -109,12 +109,12 @@ class NeuralNetwork(object):
             for data_index, label in enumerate(labels):
                 self.feed_forward(data[data_index])
                 error = self.back_propagate(label, learning_rate)
-                if data_index % 50 == 0:
+                if data_index % 100 == 0:
                     print 'Output error in iteration', iteration+1, 'and',\
                         data_index, 'trained items is %.5f' % error
             print 'Iteration', iteration+1, 'ended with error value of %.5f' % error
 
-    def predict(self, input_vector):
+    def predict(self, input_vector, return_winning_class=True):
         prediction_output_vector = self.feed_forward(input_vector)
         winning_class = np.argmax(prediction_output_vector)
-        return winning_class
+        return winning_class if return_winning_class else prediction_output_vector
