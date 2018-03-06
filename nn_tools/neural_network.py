@@ -114,7 +114,10 @@ class NeuralNetwork(object):
                         data_index, 'trained items is %.5f' % error
             print 'Iteration', iteration+1, 'ended with error value of %.5f' % error
 
-    def predict(self, input_vector, return_winning_class=True):
-        prediction_output_vector = self.feed_forward(input_vector)
-        winning_class = np.argmax(prediction_output_vector)
-        return winning_class if return_winning_class else prediction_output_vector
+    def predict(self, input_vector, return_winning_class=True, return_hidden_layer=False):
+        prediction_result = self.feed_forward(input_vector)
+        if return_hidden_layer:
+            prediction_result = self.active[0]
+        if return_winning_class:
+            prediction_result = np.argmax(prediction_result)
+        return prediction_result
