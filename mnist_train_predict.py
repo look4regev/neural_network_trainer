@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from datetime import datetime
 
 from dataset.mnist_reader import read_mnist, DataSets
 from nn_tools.neural_network import NeuralNetwork
@@ -15,6 +16,7 @@ L2_REGULARIZATION = 0.1
 
 
 def train_and_predict_mnist():
+    start_time = datetime.now()
     neural_network = NeuralNetwork(INPUT_LAYER_NEURONS_COUNT, ACTIVE_LAYERS_NEURONS_COUNT,
                                    L2_REGULARIZATION)
 
@@ -33,6 +35,8 @@ def train_and_predict_mnist():
             matches += 1
         test_size += 1
 
+    end_time = datetime.now()
+    run_time_minutes = (end_time - start_time).seconds / 60
     precision = float(matches) / test_size
     recall = float(test_size - matches) / test_size
     print "Done predictions on testset. Results:"
@@ -42,6 +46,7 @@ def train_and_predict_mnist():
     print "Total Precision = %.4f" % precision
     print "Total Recall = %.4f" % recall
     print 'Predictions histogram:', predictions_histogram
+    print 'Total run timespan (minutes) =', run_time_minutes
 
 
 if __name__ == "__main__":
